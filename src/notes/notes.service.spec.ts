@@ -3,11 +3,17 @@ import { NotesService } from './notes.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { Note } from '@prisma/client';
 import { NotFoundException } from '@nestjs/common';
+import { CreateNoteDto } from './dto/create-note.dto';
+import { create } from 'domain';
+import { title } from 'process';
 
 const mockPrismaService = {
   note: {
     findMany: jest.fn(),
     findUnique: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
   },
 };
 
@@ -59,6 +65,37 @@ describe('NotesServiceTest', () => {
       await expect(notesService.findById('test-id1')).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe('create', () => {
+    it('正常系', async () => {
+      const createNoteDto: CreateNoteDto = {
+        title: 'test-title1',
+        content: 'test-content1',
+        published: false,
+      };
+
+      const expected: Note = {
+        id: 'test-id1',
+        title: 'test-title1',
+        content: 'test-content1',
+        published: false,
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
+      };
+
+      jest.mocked(prismaService.note.create).mockResolvedValue(expected);
+      const result = await notesService.create(createNoteDto);
+      expect(result).toEqual(expected);
+
+      expect(prismaService.note.create).toHaveBeenCalledWith({
+        data: {
+          title: createNoteDto.title,
+          content: createNoteDto.content,
+          published: createNoteDto.published,
+        },
+      });
     });
   });
 });
